@@ -864,6 +864,7 @@ function FlatpickrInstance(
     //updateNavigationCurrentMonth();
 
     const dayContainer = createElement<HTMLDivElement>("div", "dayContainer");
+    dayContainer.dataset.prevMonthDay = firstOfMonth.toString();
     dayContainer.appendChild(days);
 
     return dayContainer;
@@ -1673,9 +1674,10 @@ function FlatpickrInstance(
     }
 
     for (let m = 0; m < self.config.showMonths; m++) {
-      const month = (<HTMLDivElement>self.daysContainer).children[m];
-      const prevMonth = (<HTMLDivElement>self.daysContainer).children[m - 1];
-
+      const month = <HTMLDivElement>(
+        (<HTMLDivElement>self.daysContainer).children[m]
+      );
+      
       for (let i = 0, l = month.children.length; i < l; i++) {
         const dayElem = month.children[i] as DayElement,
           date = dayElem.dateObj;
@@ -1705,14 +1707,12 @@ function FlatpickrInstance(
               : "endRange"
           );
 
-          if (
-            month.contains(elem) ||
-            !(
-              m > 0 &&
-              prevMonth &&
-              (<DayElement>prevMonth.lastChild).dateObj.getTime() >= timestamp
-            )
-          ) {
+          const prevMonthDay =
+            (month.dataset.prevMonthDay &&
+              parseInt(month.dataset.prevMonthDay)) ||
+            0;
+
+          if (month.contains(elem) || !(m > 0 && prevMonthDay > i)) {
             if (initialDate < hoverDate && timestamp === initialDate)
               dayElem.classList.add("startRange");
             else if (initialDate > hoverDate && timestamp === initialDate)
