@@ -46,6 +46,8 @@ export interface Elements {
   minuteElement?: HTMLInputElement;
   secondElement?: HTMLInputElement;
   amPM?: HTMLSpanElement;
+
+  pluginElements: Array<Node>;
 }
 
 export interface Formatting {
@@ -63,6 +65,7 @@ export type Instance = Elements &
     latestSelectedDateObj?: Date;
     _selectedDateObj?: Date;
     selectedDates: Date[];
+    _initialDate: Date;
 
     // State
     config: ParsedOptions;
@@ -87,7 +90,7 @@ export type Instance = Elements &
       from_keyboard?: boolean
     ) => void;
     changeYear: (year: number) => void;
-    clear: (emitChangeEvent?: boolean) => void;
+    clear: (emitChangeEvent?: boolean, toInitial?: boolean) => void;
     close: () => void;
     destroy: () => void;
     isEnabled: (date: DateOption, timeless?: boolean) => boolean;
@@ -144,10 +147,10 @@ export type Instance = Elements &
   };
 
 export interface FlatpickrFn {
-  (selector: NodeList | HTMLElement | string, config?: Options):
-    | Instance
-    | Instance[];
-  defaultConfig: ParsedOptions;
+  (selector: Node, config?: Options): Instance;
+  (selector: ArrayLike<Node>, config?: Options): Instance[];
+  (selector: string, config?: Options): Instance | Instance[];
+  defaultConfig: Partial<ParsedOptions>;
   l10ns: { [k in LocaleKey]?: CustomLocale } & { default: Locale };
   localize: (l10n: CustomLocale) => void;
   setDefaults: (config: Options) => void;

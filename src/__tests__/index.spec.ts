@@ -75,10 +75,19 @@ function simulate(
   onElement.dispatchEvent(evt);
 }
 
+// mousedown click
+const clickOn = (element: Node) => {
+  simulate("mousedown", element, { which: 1 }, CustomEvent);
+};
+
 describe("flatpickr", () => {
   beforeEach(beforeEachTest);
 
   describe("init", () => {
+    it("should gracefully handle no elements", () => {
+      expect(flatpickr([])).toEqual([]);
+    });
+
     it("should parse defaultDate", () => {
       createInstance({
         defaultDate: "2016-12-27T16:16:22.585Z",
@@ -691,6 +700,24 @@ describe("flatpickr", () => {
       expect(fp.isEnabled("2016-10-22")).toBe(false);
       expect(fp.isEnabled("2016-10-25")).toBe(false);
     });
+
+    describe("clear()", () => {
+      it("resets currentMonth and currentYear", () => {
+        createInstance({
+          defaultDate: "2016-01-20",
+        });
+
+        fp.changeMonth(-1);
+
+        expect(fp.currentMonth).toEqual(11);
+        expect(fp.currentYear).toEqual(2015);
+
+        fp.clear();
+
+        expect(fp.currentMonth).toEqual(0);
+        expect(fp.currentYear).toEqual(2016);
+      });
+    });
   });
 
   describe("UI", () => {
@@ -733,6 +760,21 @@ describe("flatpickr", () => {
       ).toBe(true);
       expect(fp.element.parentNode.childNodes[0]).toEqual(fp.element);
       expect(fp.element.parentNode.childNodes[1]).toEqual(fp.calendarContainer);
+    });
+
+    it("range mode - no month jump", () => {
+      createInstance({
+        mode: "range",
+        maxDate: "today",
+        defaultDate: ["2019-02-01", "2019-02-27"],
+      });
+
+      fp.open();
+      simulate("mousedown", fp.prevMonthNav, { which: 1 }, CustomEvent);
+      expect(fp.currentMonth).toEqual(0);
+
+      simulate("mousedown", fp.days.children[2], { which: 1 }, CustomEvent);
+      expect(fp.currentMonth).toEqual(0);
     });
 
     describe("mobile calendar", () => {
@@ -1284,6 +1326,54 @@ describe("flatpickr", () => {
       expect(fp.currentMonth).toBe(2);
       expect(isArrowDisabled("prevMonthNav")).toBe(false);
       expect(isArrowDisabled("nextMonthNav")).toBe(true);
+    });
+
+    it("idempotent on focus in and out", () => {
+      createInstance({
+        allowInput: true,
+      });
+
+      fp._input.focus();
+      clickOn(document.body);
+      expect(fp._input.value).toEqual("");
+    });
+
+    it("time-picker focuses out onto input", () => {
+      createInstance({ mode: "time" });
+      fp.open();
+
+      fp.minuteElement.focus();
+      simulate(
+        "keydown",
+        document.activeElement,
+        {
+          keyCode: 9, // Tab
+        },
+        KeyboardEvent
+      );
+      expect(document.activeElement).toStrictEqual(fp.amPM);
+
+      simulate(
+        "keydown",
+        document.activeElement,
+        {
+          keyCode: 9, // Tab
+          shiftKey: true,
+        },
+        KeyboardEvent
+      );
+      expect(document.activeElement).toStrictEqual(fp.minuteElement);
+
+      fp.amPM.focus();
+      simulate(
+        "keydown",
+        fp.amPM!,
+        {
+          keyCode: 9, // Tab
+        },
+        KeyboardEvent
+      );
+      expect(document.activeElement).toStrictEqual(fp._input);
     });
   });
 
